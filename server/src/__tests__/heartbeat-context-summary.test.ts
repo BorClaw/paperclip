@@ -53,6 +53,25 @@ describe("buildPaperclipTaskMarkdown", () => {
 
     expect(acceptedConfirmation).toContain("Create child issues from the approved plan only");
     expect(acceptedConfirmation).not.toContain("Make the plan only.");
+
+    const rejectedConfirmation = buildPaperclipTaskMarkdown({
+      issue: {
+        id: "issue-1",
+        identifier: "PAP-3404",
+        title: "Plan first",
+        workMode: "planning",
+        description: null,
+      },
+      interaction: {
+        kind: "request_confirmation",
+        status: "rejected",
+      },
+    });
+
+    expect(rejectedConfirmation).toContain("Revise the rejected plan only");
+    expect(rejectedConfirmation).toContain("Fetch the latest request_confirmation result.reason");
+    expect(rejectedConfirmation).toContain("create a fresh confirmation");
+    expect(rejectedConfirmation).not.toContain("Create child issues from the approved plan only");
   });
 
   it("adds accepted-plan continuation guidance for standard-work issues when the wake is flagged as a plan continuation", () => {

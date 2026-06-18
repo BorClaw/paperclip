@@ -2696,6 +2696,11 @@ export function buildPaperclipTaskMarkdown(input: {
       input.interaction.status === "accepted" &&
       issue?.workMode === "planning"
     ));
+  const rejectedPlanContinuation =
+    !wakeComment &&
+    input.interaction?.kind === "request_confirmation" &&
+    input.interaction.status === "rejected" &&
+    issue?.workMode === "planning";
   if (!issue && !wakeComment) return null;
 
   const lines = [
@@ -2714,6 +2719,9 @@ export function buildPaperclipTaskMarkdown(input: {
       }
       if (acceptedPlanContinuation) {
         directive = "Create child issues from the approved plan only. Do not write code or perform implementation work on the planning issue.";
+      }
+      if (rejectedPlanContinuation) {
+        directive = "Revise the rejected plan only. Fetch the latest request_confirmation result.reason, update the plan document, and create a fresh confirmation. Do not create child issues or write implementation code.";
       }
       lines.push(
         `- Work mode: ${quoteTaskScalar("planning")}`,

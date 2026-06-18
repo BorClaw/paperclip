@@ -773,6 +773,30 @@ describe("renderPaperclipWakePrompt", () => {
     expect(prompt).toContain("must not start implementation work on the planning issue itself");
   });
 
+  it("renders rejected-plan continuation guidance for planning issues", () => {
+    const prompt = renderPaperclipWakePrompt({
+      reason: "issue_commented",
+      issue: {
+        id: "issue-1",
+        identifier: "PAP-3404",
+        title: "Plan first",
+        status: "in_review",
+        workMode: "planning",
+      },
+      interactionKind: "request_confirmation",
+      interactionStatus: "rejected",
+      commentWindow: { requestedCount: 0, includedCount: 0, missingCount: 0 },
+      comments: [],
+      fallbackFetchNeeded: false,
+    });
+
+    expect(prompt).toContain("- interaction: request_confirmation (rejected)");
+    expect(prompt).toContain("rejected-plan continuation");
+    expect(prompt).toContain("read the latest request_confirmation result.reason");
+    expect(prompt).toContain("create a fresh request_confirmation");
+    expect(prompt).not.toContain("Create child issues from the approved plan only");
+  });
+
   it("keeps accepted-plan guidance when stale comment ids have no loaded comments", () => {
     const prompt = renderPaperclipWakePrompt({
       reason: "issue_commented",
