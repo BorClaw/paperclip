@@ -187,13 +187,6 @@ export async function ensurePiModelConfiguredAndAvailable(input: {
     throw new Error("Pi returned no models. Run `pi --list-models` and verify provider auth.");
   }
 
-  if (!models.some((entry) => entry.id === model)) {
-    const sample = models.slice(0, 12).map((entry) => entry.id).join(", ");
-    throw new Error(
-      `Configured Pi model is unavailable: ${model}. Available models: ${sample}${models.length > 12 ? ", ..." : ""}`,
-    );
-  }
-
   return models;
 }
 
