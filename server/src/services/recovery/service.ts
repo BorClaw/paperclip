@@ -163,6 +163,14 @@ function didAutomaticRecoveryFail(
     );
 }
 
+function isReviewWaitContinuationCancellation(latestRun: LatestIssueRun) {
+  if (!latestRun) return false;
+  const context = parseObject(latestRun.contextSnapshot);
+  return latestRun.status === "cancelled" &&
+    readNonEmptyString(latestRun.errorCode) === "issue_continuation_waiting_on_review" &&
+    readNonEmptyString(context.retryReason) === "issue_continuation_needed";
+}
+
 const TRANSIENT_INFRA_CONTINUATION_ERROR_CODES = new Set<string>([
   "adapter_failed",
   "codex_transient_upstream",
@@ -2662,6 +2670,23 @@ export function recoveryService(db: Db, deps: { enqueueWakeup: RecoveryWakeup })
         continue;
       }
       if (isUnsuccessfulTerminalIssueRun(latestRun)) {
+        if (isReviewWaitContinuationCancellation(latestRun)) {
+          const activeRecoveryAction = await recoveryActionsSvc.getActiveForIssue(issue.companyId, issue.id);
+          if (activeRecoveryAction) {
+            await recoveryActionsSvc.resolveActiveForIssue({
+              companyId: issue.companyId,
+              sourceIssueId: issue.id,
+              actionId: activeRecoveryAction.id,
+              status: "cancelled",
+              outcome: "false_positive",
+              resolutionNote:
+                "Automatic recovery suppressed: latest continuation was intentionally cancelled because executor work is parked for review or approval feedback.",
+            });
+          }
+          result.skipped += 1;
+          continue;
+        }
+
         const classification = classifyContinuationFailure(latestRun);
 
         if (classification.kind === "non_retryable") {
